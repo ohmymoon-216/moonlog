@@ -14,6 +14,7 @@ import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -38,7 +39,7 @@ public class PostControllerDocTest {
     }
 
     @Test
-    @DisplayName("아무개")
+    @DisplayName("글 단건 조회 테스트")
     void test() throws Exception {
         // given
         PostCreate request = PostCreate.builder()
@@ -50,6 +51,7 @@ public class PostControllerDocTest {
         // expected
         this.mockMvc.perform(MockMvcRequestBuilders.get("/posts/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andDo(MockMvcResultHandlers.print())
                 .andDo(document("index"));
     }
 }
