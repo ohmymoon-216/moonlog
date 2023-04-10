@@ -7,7 +7,6 @@ import javax.persistence.*;
 @Entity
 @NoArgsConstructor
 @Getter
-@Setter
 public class Post {
 
     @Id
@@ -23,5 +22,16 @@ public class Post {
     public Post(String title, String content){
         this.title = title;
         this.content = content;
+    }
+
+    public PostEditor.PostEditorBuilder toEditor(){
+        return PostEditor.builder()
+                .title(title)
+                .content(content);
+    }
+
+    public void edit(PostEditor postEditor){
+        if(postEditor.getTitle()!=null) title = postEditor.getTitle();
+        if(postEditor.getContent()!=null) content = postEditor.getContent();
     }
 }

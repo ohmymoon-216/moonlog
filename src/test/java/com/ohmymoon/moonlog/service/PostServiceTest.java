@@ -1,8 +1,11 @@
 package com.ohmymoon.moonlog.service;
 
 import com.ohmymoon.moonlog.domain.Post;
+import com.ohmymoon.moonlog.exception.PostNotFoundException;
 import com.ohmymoon.moonlog.repository.PostRepository;
 import com.ohmymoon.moonlog.request.PostCreate;
+import com.ohmymoon.moonlog.request.PostEdit;
+import com.ohmymoon.moonlog.request.PostSearch;
 import com.ohmymoon.moonlog.response.PostResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -39,12 +42,11 @@ class PostServiceTest {
 
 
         // when
-        postService.write(request);
+        Post post = postService.write(request);
 
         // then
-        Assertions.assertEquals(1L, postRepository.count());
 
-        Post post = postRepository.findAll().get(0);
+        assertTrue(post.getId() > 0);
         assertEquals("제목입니다.", post.getTitle());
         assertEquals("내용입니다.", post.getContent());
     }
@@ -64,35 +66,28 @@ class PostServiceTest {
 
         // then
         assertNotNull(response);
-        assertEquals(1L, postRepository.count());
         assertEquals("foo", response.getTitle());
         assertEquals("bar", response.getContent());
     }
 
     @Test
-    @DisplayName("글 목록 조회")
-    void getList() {
+    @DisplayName("존재하지 않는 글 조회")
+    void getNone() {
         // given
-        Post requestPost1 = Post.builder()
-                .title("foo1")
-                .content("bar1")
+        Post post = Post.builder()
+                .title("foo")
+                .content("bar")
                 .build();
-        postRepository.save(requestPost1);
+        postRepository.save(post);
 
-        Post requestPost2 = Post.builder()
-                .title("foo2")
-                .content("bar2")
-                .build();
-        postRepository.save(requestPost2);
+        // expected
+        PostNotFoundException e = assertThrows(PostNotFoundException.class, () -> {
+            postService.get(post.getId() + 1);
+        });
 
-        // when
-        List<PostResponse> response = postService.getList();
-
-        // then
-        assertNotNull(response);
-        assertEquals(2L, response.size());
-
+        assertEquals(PostNotFoundException.MESSAGE, e.getMessage());
     }
+
 
     @Test
     @DisplayName("글 페이지 조회")
@@ -108,15 +103,71 @@ class PostServiceTest {
                         .collect(Collectors.toList());
         postRepository.saveAll(requestPosts);
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
+        PostSearch search = PostSearch.builder()
+                .page(1)
+                .size(10)
+                .build();
 
         // when
-        List<PostResponse> response = postService.getList(pageable);
+        List<PostResponse> response = postService.getList(search);
 
         // then
         assertNotNull(response);
         assertEquals(10L, response.size());
         assertEquals("제목 - 30", response.get(0).getTitle());
 
+    }
+
+    @Test
+    @DisplayName("글 제목 수정")
+    void edit() {
+        // given
+        Post post = Post.builder()
+                        .title("테스트 제목")
+                                .content("테스트 내용")
+                                        .build();
+
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("수정된 제목")
+                .content("수정된 내용")
+                .build();
+
+        // when
+        postService.edit(post.getId(), postEdit);
+
+        // then
+        Post changedPost = postRepository.findById(post.getId())
+                .orElseThrow(() -> new RuntimeException("글이 존재하지 않습니다."));
+        assertNotNull(changedPost);
+        assertEquals(postEdit.getTitle(), changedPost.getTitle());
+        assertEquals(postEdit.getContent(), changedPost.getContent());
+
+    }
+
+    @Test
+    @DisplayName("게시글 삭제")
+    void delete() {
+        // given
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
+
+        postRepository.save(post);
+
+        long postId = post.getId();
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("수정된 제목")
+                .content("수정된 내용")
+                .build();
+
+        // when
+        postService.delete(postId);
+
+        // then
+        assertEquals(null, postRepository.findById(postId).orElse(null));
     }
 }

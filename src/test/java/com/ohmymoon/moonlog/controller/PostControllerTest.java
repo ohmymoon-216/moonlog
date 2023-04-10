@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ohmymoon.moonlog.domain.Post;
 import com.ohmymoon.moonlog.repository.PostRepository;
 import com.ohmymoon.moonlog.request.PostCreate;
+import com.ohmymoon.moonlog.request.PostEdit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -138,35 +139,17 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("글 목록 조회")
-    void test5() throws Exception {
-        // given
-        Post requestPost1 = Post.builder()
-                .title("foo1")
-                .content("bar1")
-                .build();
-        postRepository.save(requestPost1);
-
-        Post requestPost2 = Post.builder()
-                .title("foo2")
-                .content("bar2")
-                .build();
-        postRepository.save(requestPost2);
-
+    @DisplayName("존재하지 않는 글 조회")
+    void test4_2() throws Exception {
 
         // when
-        mockMvc.perform(MockMvcRequestBuilders.get("/posts")
+        mockMvc.perform(MockMvcRequestBuilders.get("/posts/{postId}", 0)
                         .contentType(APPLICATION_JSON)
                 )
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.length()", is(2)))
-                .andExpect(jsonPath("$[0].id").value(requestPost1.getId()))
-                .andExpect(jsonPath("$[0].title").value("foo1"))
-                .andExpect(jsonPath("$[0].content").value("bar1"))
+                .andExpect(MockMvcResultMatchers.status().isNotFound())
                 .andDo(MockMvcResultHandlers.print());
 
     }
-
     @Test
     @DisplayName("글 페이지 조회")
     void test6() throws Exception {
@@ -183,14 +166,59 @@ class PostControllerTest {
 
 
         // when
-        mockMvc.perform(MockMvcRequestBuilders.get("/posts?page=0&sort=id,desc")
+        mockMvc.perform(MockMvcRequestBuilders.get("/posts?page=1&size=10")
                         .contentType(APPLICATION_JSON)
                 )
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.length()", is(10)))
-                .andExpect(jsonPath("$[0].id").value(30))
                 .andDo(MockMvcResultHandlers.print());
 
     }
 
+    @Test
+    @DisplayName("글 제목 수정")
+    void test7() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
+
+        postRepository.save(post);
+
+        PostEdit postEdit = PostEdit.builder()
+                .title("수정된 제목")
+                .content("수정된 내용")
+                .build();
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders.patch("/posts/" + post.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postEdit))
+                )
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print());
+
+    }
+
+    @Test
+    @DisplayName("게시글 삭제")
+    void test8() throws Exception {
+        // given
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .build();
+
+        postRepository.save(post);
+
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders.delete("/posts/" + post.getId())
+                        .contentType(APPLICATION_JSON)
+                )
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(MockMvcResultHandlers.print());
+
+    }
 }

@@ -2,6 +2,7 @@ package com.ohmymoon.moonlog.repository;
 
 import com.ohmymoon.moonlog.domain.Post;
 import com.ohmymoon.moonlog.domain.QPost;
+import com.ohmymoon.moonlog.request.PostSearch;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -15,10 +16,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public List<Post> getList(Pageable pageable) {
+    public List<Post> getList(PostSearch search) {
         return jpaQueryFactory.selectFrom(QPost.post)
-                .limit(pageable.getPageSize())
-                .offset(pageable.getOffset())
+                .limit(search.getSize())
+                .offset(search.getOffset())
                 .orderBy(QPost.post.id.desc())
                 .fetch();
     }

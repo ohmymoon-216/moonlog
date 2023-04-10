@@ -2,6 +2,8 @@ package com.ohmymoon.moonlog.controller;
 
 import com.ohmymoon.moonlog.domain.Post;
 import com.ohmymoon.moonlog.request.PostCreate;
+import com.ohmymoon.moonlog.request.PostEdit;
+import com.ohmymoon.moonlog.request.PostSearch;
 import com.ohmymoon.moonlog.response.PostResponse;
 import com.ohmymoon.moonlog.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +50,17 @@ public class PostController {
     }
 
     @GetMapping("/posts")
-    public List<PostResponse> getList(@PageableDefault Pageable pageable) {
-        return postService.getList(pageable);
+    public List<PostResponse> getList(@ModelAttribute PostSearch search) {
+        return postService.getList(search);
+    }
+
+    @PatchMapping("posts/{postId}")
+    public PostResponse edit(@PathVariable Long postId, @RequestBody @Valid PostEdit request){
+        return postService.edit(postId, request);
+    }
+
+    @DeleteMapping("posts/{postId}")
+    public void delete(@PathVariable Long postId) {
+        postService.delete(postId);
     }
 }
