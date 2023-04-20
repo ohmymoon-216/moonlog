@@ -34,6 +34,7 @@ public class PostController {
      */
     @PostMapping("/posts")
     public ResponseEntity post(@RequestBody @Valid PostCreate request)  {
+        log.info("글작성 - 제목: {}, 내용: {}", request.getTitle(), request.getContent());
         postService.write(request);
 
         return ResponseEntity.ok(null);
